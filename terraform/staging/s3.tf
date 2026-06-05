@@ -63,5 +63,13 @@ resource "aws_s3_bucket_policy" "client" {
   bucket = aws_s3_bucket.client.id
   policy = data.aws_iam_policy_document.s3_cloudfront_oac.json
 
-  depends_on = [aws_s3_bucket_public_access_block.client]
+  # Explicit dependency ensures the CloudFront distribution (and its ARN) exist
+  # before the bucket policy is applied. Without this, Terraform may apply the
+  # policy before the distribution is created (the ARN reference flows through
+  # a data source, so the implicit dep chain isn't always inferred correctly),
+  # causing CloudFront to receive AccessDenied from S3 and return raw XML.
+  depends_on = [
+    aws_s3_bucket_public_access_block.client,
+    aws_cloudfront_distribution.client,
+  ]
 }
