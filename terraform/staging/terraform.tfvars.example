@@ -1,0 +1,10 @@
+# Copy to terraform.tfvars and fill in values.
+# terraform.tfvars is git-ignored — do not commit it.
+
+# Required
+docdb_password = "replace-with-strong-password"
+jwt_secret     = "replace-with-long-random-secret"
+
+# Optional
+# google_client_id = "xxxx.apps.googleusercontent.com"
+# aws_region       = "us-east-1"

@@ -75,12 +75,18 @@ yarn cache:clear:vite   # clear Vite build cache only
 
 ## AWS Deployment
 
-Infrastructure is managed with Terraform in the `terraform/` directory.
+Infrastructure is managed with Terraform. Two environments are available:
+
+| | Production (`terraform/`) | Staging (`terraform/staging/`) |
+|---|---|---|
+| **Database** | DocumentDB standard (`db.t3.medium`) | DocumentDB Elastic (serverless) |
+| **App Runner** | 1 vCPU / 2GB | 0.25 vCPU / 0.5GB |
+| **Est. cost** | ~$60–80/mo | ~$5–15/mo |
 
 ### Architecture
 - **Client** → S3 + CloudFront
 - **Server** → AWS App Runner (Docker image via ECR)
-- **Database** → Amazon DocumentDB (in a private VPC)
+- **Database** → Amazon DocumentDB (production) / DocumentDB Elastic (staging)
 
 ### Prerequisites
 - [Terraform](https://developer.hashicorp.com/terraform/install)
@@ -88,8 +94,16 @@ Infrastructure is managed with Terraform in the `terraform/` directory.
 - Docker (for building the server image)
 
 ### 1. Configure Terraform variables
+
+**Production:**
 ```bash
 cd terraform
+cp terraform.tfvars.example terraform.tfvars
+```
+
+**Staging:**
+```bash
+cd terraform/staging
 cp terraform.tfvars.example terraform.tfvars
 ```
 
@@ -102,7 +116,13 @@ google_client_id = "your-google-client-id"  # optional
 
 ### 2. Deploy infrastructure
 ```bash
+# Production
 cd terraform
+terraform init
+terraform apply
+
+# Staging
+cd terraform/staging
 terraform init
 terraform apply
 ```
