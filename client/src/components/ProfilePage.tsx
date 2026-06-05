@@ -73,6 +73,7 @@ const breedOptions = [
 interface TemperamentTokenFieldProps {
   inputValue: string;
   label: string;
+  listId: string;
   onInputChange: (value: string) => void;
   onTokensChange: (tokens: string[]) => void;
   tokens: string[];
@@ -101,18 +102,27 @@ function formatTemperament(temperament: DogProfile['temperament']) {
 function TemperamentTokenField({
   inputValue,
   label,
+  listId,
   onInputChange,
   onTokensChange,
   tokens,
 }: TemperamentTokenFieldProps) {
-  const remainingOptions = temperamentOptions.filter(
-    option => !tokens.some(token => token.toLowerCase() === option.toLowerCase()),
-  );
-
   const handleAddInput = () => {
     const nextTokens = addToken(tokens, inputValue);
     onTokensChange(nextTokens);
     if (nextTokens !== tokens) onInputChange('');
+  };
+
+  const handleInputChange = (value: string) => {
+    const exactOption = temperamentOptions.find(option => option.toLowerCase() === value.trim().toLowerCase());
+    if (exactOption) {
+      const nextTokens = addToken(tokens, exactOption);
+      onTokensChange(nextTokens);
+      onInputChange('');
+      return;
+    }
+
+    onInputChange(value);
   };
 
   return (
@@ -132,32 +142,24 @@ function TemperamentTokenField({
       </div>
       <div className="token-input-row">
         <input
+          list={listId}
           type="text"
           placeholder="Add temperament"
           value={inputValue}
-          onChange={e => onInputChange(e.target.value)}
+          onBlur={handleAddInput}
+          onChange={e => handleInputChange(e.target.value)}
           onKeyDown={e => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' || e.key === ',') {
               e.preventDefault();
               handleAddInput();
             }
           }}
         />
-        <button className="btn btn--ghost" type="button" onClick={handleAddInput}>
-          Add
-        </button>
-      </div>
-      <div className="token-suggestions">
-        {remainingOptions.map(option => (
-          <button
-            className="token-chip"
-            key={option}
-            type="button"
-            onClick={() => onTokensChange(addToken(tokens, option))}
-          >
-            {option}
-          </button>
-        ))}
+        <datalist id={listId}>
+          {temperamentOptions.map(option => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
       </div>
     </div>
   );
@@ -384,6 +386,7 @@ export default function ProfilePage() {
                 <TemperamentTokenField
                   inputValue={editTemperamentInput}
                   label="Temperament"
+                  listId="edit-temperament-options"
                   onInputChange={setEditTemperamentInput}
                   onTokensChange={setEditTemperament}
                   tokens={editTemperament}
@@ -557,6 +560,7 @@ export default function ProfilePage() {
             <TemperamentTokenField
               inputValue={temperamentInput}
               label="Temperament"
+              listId="temperament-options"
               onInputChange={setTemperamentInput}
               onTokensChange={setTemperament}
               tokens={temperament}

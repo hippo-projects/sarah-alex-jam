@@ -115,8 +115,7 @@ body {
   min-width: 0;
 }
 
-.token-list,
-.token-suggestions {
+.token-list {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -127,13 +126,7 @@ body {
 }
 
 .token-input-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-}
-
-.token-input-row .btn {
-  padding: 7px 12px;
+  display: block;
 }
 
 .token-chip {
