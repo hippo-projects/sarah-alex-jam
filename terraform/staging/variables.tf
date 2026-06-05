@@ -33,3 +33,13 @@ variable "google_client_id" {
   type        = string
   default     = ""
 }
+
+variable "domain_name" {
+  description = "Root domain name (e.g. example.com). Staging served at staging.<domain>, API at api.staging.<domain>."
+  type        = string
+}
+
+variable "route53_zone_id" {
+  description = "Route 53 hosted zone ID from the production terraform workspace (zone is shared)"
+  type        = string
+}

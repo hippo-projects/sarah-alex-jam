@@ -27,3 +27,13 @@ output "cloudfront_distribution_id" {
   description = "CloudFront distribution ID (for cache invalidation)"
   value       = aws_cloudfront_distribution.client.id
 }
+
+output "client_url" {
+  description = "Custom domain URL for the staging React client"
+  value       = "https://staging.${var.domain_name}"
+}
+
+output "api_url" {
+  description = "Custom domain URL for the staging GraphQL API"
+  value       = "https://api.staging.${var.domain_name}"
+}

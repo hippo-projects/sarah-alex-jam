@@ -4,6 +4,7 @@
 # Required — no defaults
 docdb_password = "replace-with-strong-password"
 jwt_secret     = "replace-with-long-random-secret"
+domain_name    = "yourdomain.com"
 
 # Optional — override defaults if needed
 # aws_region       = "us-east-1"

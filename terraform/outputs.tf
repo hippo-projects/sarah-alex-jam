@@ -27,3 +27,23 @@ output "cloudfront_distribution_id" {
   description = "CloudFront distribution ID (for cache invalidation)"
   value       = aws_cloudfront_distribution.client.id
 }
+
+output "route53_zone_id" {
+  description = "Route 53 hosted zone ID — needed as an input for the staging workspace"
+  value       = aws_route53_zone.main.zone_id
+}
+
+output "name_servers" {
+  description = "Route 53 name servers — point your domain registrar at these"
+  value       = aws_route53_zone.main.name_servers
+}
+
+output "client_url" {
+  description = "Custom domain URL for the React client"
+  value       = "https://${var.domain_name}"
+}
+
+output "api_url" {
+  description = "Custom domain URL for the GraphQL API"
+  value       = "https://api.${var.domain_name}"
+}

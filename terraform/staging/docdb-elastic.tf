@@ -18,4 +18,8 @@ resource "aws_docdbelastic_cluster" "staging" {
     Name        = "${var.app_name}-docdb-elastic"
     Environment = var.environment
   }
+
+  lifecycle {
+    ignore_changes = [admin_user_password, auth_type]
+  }
 }

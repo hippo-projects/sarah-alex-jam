@@ -115,8 +115,20 @@ Edit `terraform.tfvars`:
 ```hcl
 docdb_password   = "your-strong-password"    # min 8 chars, no @ / " or spaces
 jwt_secret       = "your-jwt-secret"
+domain_name      = "yourdomain.com"
 google_client_id = "your-google-client-id"   # optional
 ```
+
+Edit `terraform/staging/terraform.tfvars`:
+```hcl
+docdb_password   = "your-strong-password"
+jwt_secret       = "your-jwt-secret"
+domain_name      = "yourdomain.com"
+route53_zone_id  = "Z0123456789ABCDEFGHIJ"   # from: cd terraform && terraform output -raw route53_zone_id
+google_client_id = "your-google-client-id"   # optional
+```
+
+> **Note:** Deploy production first so the Route 53 zone exists before staging tries to add records to it.
 
 #### 2. Deploy infrastructure
 ```bash
@@ -135,7 +147,13 @@ ecr_repository_url         = "069637868194.dkr.ecr.us-east-1.amazonaws.com/sarah
 s3_bucket_name             = "sarah-alex-jam-staging-client-xxxx"
 cloudfront_distribution_id = "XXXXXXXXXXXX"
 docdb_endpoint             = "xxxx.us-east-1.docdb.amazonaws.com"
+route53_zone_id            = "Z0123456789ABCDEFGHIJ"
+name_servers               = ["ns-xxx.awsdns-xx.com", ...]
+client_url                 = "https://yourdomain.com"
+api_url                    = "https://api.yourdomain.com"
 ```
+
+> **Domain registrar step:** After the first production `terraform apply`, copy the `name_servers` output and set them as the nameservers at your domain registrar. DNS propagation takes a few minutes to a few hours.
 
 #### 3. Push the server image to ECR
 
@@ -206,6 +224,8 @@ Add these in **Settings → Secrets → Actions**:
 | `STAGING_GOOGLE_CLIENT_ID` | Google Cloud Console |
 | `STAGING_DOCDB_PASSWORD` | Value set in `terraform.tfvars` |
 | `STAGING_JWT_SECRET` | Value set in `terraform.tfvars` |
+| `STAGING_DOMAIN_NAME` | Root domain (e.g. `yourdomain.com`) |
+| `STAGING_ROUTE53_ZONE_ID` | `cd terraform && terraform output -raw route53_zone_id` |
 
 ---
 

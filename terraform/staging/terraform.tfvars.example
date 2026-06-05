@@ -2,8 +2,10 @@
 # terraform.tfvars is git-ignored — do not commit it.
 
 # Required
-docdb_password = "replace-with-strong-password"
-jwt_secret     = "replace-with-long-random-secret"
+docdb_password  = "replace-with-strong-password"
+jwt_secret      = "replace-with-long-random-secret"
+domain_name     = "yourdomain.com"
+route53_zone_id = "Z0123456789ABCDEFGHIJ"   # from: terraform -chdir=terraform output -raw route53_zone_id
 
 # Optional
 # google_client_id = "xxxx.apps.googleusercontent.com"
