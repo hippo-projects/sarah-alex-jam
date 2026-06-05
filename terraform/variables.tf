@@ -19,7 +19,7 @@ variable "environment" {
 variable "docdb_username" {
   description = "Master username for the DocumentDB cluster"
   type        = string
-  default     = "admin"
+  default     = "sajadmin"
 }
 
 variable "docdb_password" {
