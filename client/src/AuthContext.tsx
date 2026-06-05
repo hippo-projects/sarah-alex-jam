@@ -9,10 +9,11 @@ export interface HumanProfile {
 }
 
 export interface DogProfile {
+  id: string;
   name: string;
   breed: string;
   age: number;
-  temperament: string;
+  temperament: string[] | string;
   size: string;
   weight: number;
   offLeashBehavior: string;

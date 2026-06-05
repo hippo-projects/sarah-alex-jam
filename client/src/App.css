@@ -54,6 +54,14 @@ body {
 }
 .btn--ghost:hover { background: var(--surface-2); }
 
+.btn--danger {
+  background: transparent;
+  border: 1px solid rgba(197,48,48,0.26);
+  color: var(--red);
+}
+.btn--danger:hover { background: rgba(197,48,48,0.08); }
+.btn--danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* Form */
 .form-grid {
   display: grid;
@@ -101,6 +109,57 @@ body {
   color: var(--red);
   font-size: 13px;
   margin-bottom: 12px;
+}
+
+.token-field {
+  min-width: 0;
+}
+
+.token-list,
+.token-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.token-list:empty {
+  display: none;
+}
+
+.token-input-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.token-input-row .btn {
+  padding: 7px 12px;
+}
+
+.token-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  padding: 5px 9px;
+  transition: all 0.15s;
+}
+
+.token-chip:hover {
+  background: var(--surface-2);
+}
+
+.token-chip--selected {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--surface);
+}
+
+.token-chip--selected::after {
+  content: ' x';
 }
 
 /* Header */
@@ -457,6 +516,13 @@ body {
   padding: 14px;
 }
 
+.dog-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .dog-card h3 {
   font-size: 18px;
   font-weight: 500;
@@ -487,6 +553,58 @@ body {
   overflow-wrap: anywhere;
 }
 
+.dog-detail-panel {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+}
+
+.dog-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.dog-detail-header h1 {
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 500;
+}
+
+.dog-detail-header p:last-child {
+  margin-top: 6px;
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.dog-detail-actions,
+.dog-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dog-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.dog-edit-form {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.dog-form-actions {
+  margin-top: 6px;
+}
+
 @media (max-width: 480px) {
   .form-grid { grid-template-columns: 1fr; }
   .login-page { padding: 0.75rem; }
@@ -504,10 +622,18 @@ body {
   .dog-form-grid { grid-template-columns: 1fr; }
   .dog-list { grid-template-columns: 1fr; }
   .dog-card dl { grid-template-columns: 1fr; }
+  .dog-card-header,
+  .dog-detail-header,
+  .dog-detail-actions,
+  .dog-form-actions { align-items: stretch; flex-direction: column; }
+  .dog-detail-panel { padding: 1.25rem; }
+  .dog-detail-header h1 { font-size: 25px; }
+  .dog-detail-grid { grid-template-columns: 1fr; }
 }
 
 @media (min-width: 481px) and (max-width: 760px) {
   .profile-details { grid-template-columns: repeat(2, 1fr); }
   .dog-form-grid { grid-template-columns: 1fr; }
   .dog-list { grid-template-columns: 1fr; }
+  .dog-detail-grid { grid-template-columns: repeat(2, 1fr); }
 }

@@ -9,26 +9,85 @@ export interface AuthContext {
   authToken?: string;
 }
 
+interface DogInput {
+  name: string;
+  breed: string;
+  age: number;
+  temperament: string[];
+  size: string;
+  weight: number;
+  offLeashBehavior: string;
+}
+
+function normalizeTemperament(temperament: string[] | string) {
+  const values = Array.isArray(temperament) ? temperament : [temperament];
+  return [...new Set(values.map(value => value.trim()).filter(Boolean))];
+}
+
 function serializeUser(user: {
   _id: { toString(): string };
   email: string;
   human?: { name: string; gender: string; location: string; radius: number };
-  dogs?: Array<{
-    name: string;
-    breed: string;
-    age: number;
-    temperament: string;
-    size: string;
-    weight: number;
-    offLeashBehavior: string;
+  dogs?: Array<DogInput & {
+    _id?: { toString(): string };
+    id?: string;
   }>;
 }) {
   return {
     id: user._id.toString(),
     email: user.email,
     human: user.human?.name ? user.human : null,
-    dogs: user.dogs ?? [],
+    dogs: (user.dogs ?? []).map(dog => ({
+      id: dog._id?.toString() ?? dog.id ?? `${dog.name}-${dog.breed}`,
+      name: dog.name,
+      breed: dog.breed,
+      age: dog.age,
+      temperament: normalizeTemperament(dog.temperament),
+      size: dog.size,
+      weight: dog.weight,
+      offLeashBehavior: dog.offLeashBehavior,
+    })),
   };
+}
+
+function validateDogInput({
+  name,
+  breed,
+  age,
+  temperament,
+  size,
+  weight,
+  offLeashBehavior,
+}: DogInput): DogInput {
+  const trimmedName = name.trim();
+  const trimmedBreed = breed.trim();
+  const normalizedTemperament = normalizeTemperament(temperament);
+  const trimmedSize = size.trim();
+  const trimmedOffLeashBehavior = offLeashBehavior.trim();
+
+  if (!trimmedName) throw new Error('Dog name is required');
+  if (!trimmedBreed) throw new Error('Breed is required');
+  if (!Number.isFinite(age) || age < 0) throw new Error('Age must be zero or greater');
+  if (normalizedTemperament.length === 0) throw new Error('Temperament is required');
+  if (!trimmedSize) throw new Error('Size is required');
+  if (!Number.isFinite(weight) || weight <= 0) throw new Error('Weight must be greater than zero');
+  if (!trimmedOffLeashBehavior) throw new Error('Off leash behavior is required');
+
+  return {
+    name: trimmedName,
+    breed: trimmedBreed,
+    age,
+    temperament: normalizedTemperament,
+    size: trimmedSize,
+    weight,
+    offLeashBehavior: trimmedOffLeashBehavior,
+  };
+}
+
+function findDogIndex(dogs: Array<{ _id?: { toString(): string } }>, dogId: string) {
+  const index = dogs.findIndex(dog => dog._id?.toString() === dogId);
+  if (index === -1) throw new Error('Dog profile not found');
+  return index;
 }
 
 async function requireUser(authToken?: string) {
@@ -127,52 +186,39 @@ export const resolvers = {
 
     addDogProfile: async (
       _: unknown,
-      {
-        name,
-        breed,
-        age,
-        temperament,
-        size,
-        weight,
-        offLeashBehavior,
-      }: {
-        name: string;
-        breed: string;
-        age: number;
-        temperament: string;
-        size: string;
-        weight: number;
-        offLeashBehavior: string;
-      },
+      dogInput: DogInput,
       context: AuthContext,
     ) => {
-      const trimmedName = name.trim();
-      const trimmedBreed = breed.trim();
-      const trimmedTemperament = temperament.trim();
-      const trimmedSize = size.trim();
-      const trimmedOffLeashBehavior = offLeashBehavior.trim();
-
-      if (!trimmedName) throw new Error('Dog name is required');
-      if (!trimmedBreed) throw new Error('Breed is required');
-      if (!Number.isFinite(age) || age < 0) throw new Error('Age must be zero or greater');
-      if (!trimmedTemperament) throw new Error('Temperament is required');
-      if (!trimmedSize) throw new Error('Size is required');
-      if (!Number.isFinite(weight) || weight <= 0) throw new Error('Weight must be greater than zero');
-      if (!trimmedOffLeashBehavior) throw new Error('Off leash behavior is required');
-
       const user = await requireUser(context.authToken);
-      user.dogs = [
-        ...(user.dogs ?? []),
-        {
-          name: trimmedName,
-          breed: trimmedBreed,
-          age,
-          temperament: trimmedTemperament,
-          size: trimmedSize,
-          weight,
-          offLeashBehavior: trimmedOffLeashBehavior,
-        },
-      ];
+      user.dogs = [...(user.dogs ?? []), validateDogInput(dogInput)];
+      await user.save();
+
+      return serializeUser(user);
+    },
+
+    updateDogProfile: async (
+      _: unknown,
+      { dogId, ...dogInput }: DogInput & { dogId: string },
+      context: AuthContext,
+    ) => {
+      const user = await requireUser(context.authToken);
+      const dogs = user.dogs ?? [];
+      const index = findDogIndex(dogs, dogId);
+      Object.assign(dogs[index], validateDogInput(dogInput));
+      await user.save();
+
+      return serializeUser(user);
+    },
+
+    deleteDogProfile: async (
+      _: unknown,
+      { dogId }: { dogId: string },
+      context: AuthContext,
+    ) => {
+      const user = await requireUser(context.authToken);
+      const dogs = user.dogs ?? [];
+      const index = findDogIndex(dogs, dogId);
+      dogs.splice(index, 1);
       await user.save();
 
       return serializeUser(user);

@@ -11,10 +11,11 @@ export interface IUser extends Document {
     radius: number;
   };
   dogs?: Array<{
+    _id?: { toString(): string };
     name: string;
     breed: string;
     age: number;
-    temperament: string;
+    temperament: string[];
     size: string;
     weight: number;
     offLeashBehavior: string;
@@ -36,7 +37,7 @@ const UserSchema = new Schema<IUser>({
     name: { type: String, required: true },
     breed: { type: String, required: true },
     age: { type: Number, required: true },
-    temperament: { type: String, required: true },
+    temperament: [{ type: String, required: true }],
     size: { type: String, required: true },
     weight: { type: Number, required: true },
     offLeashBehavior: { type: String, required: true },
