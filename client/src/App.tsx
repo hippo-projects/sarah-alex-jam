@@ -1,31 +1,23 @@
-import { useEffect, useState } from 'react';
-
-const GRAPHQL_URL = 'http://localhost:4000/graphql';
-
-const query = `
-  query {
-    hello
-  }
-`;
+import './App.css';
+import { useAuth } from './AuthContext';
+import LoginForm from './components/LoginForm';
 
 export default function App() {
-  const [message, setMessage] = useState('Loading...');
+  const { user, logout } = useAuth();
 
-  useEffect(() => {
-    fetch(GRAPHQL_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
-    })
-      .then((res) => res.json())
-      .then((json) => setMessage(json.data?.hello ?? 'No response'))
-      .catch((err) => setMessage(`Error: ${err.message}`));
-  }, []);
+  if (!user) return <LoginForm />;
 
   return (
-    <div>
+    <div style={{ padding: '2rem', fontFamily: 'DM Sans, sans-serif' }}>
       <h1>Sarah Alex Jam</h1>
-      <p>{message}</p>
+      <p style={{ marginTop: '0.5rem', color: 'var(--text-2)' }}>Welcome, {user.email}</p>
+      <button
+        className="btn btn--ghost"
+        style={{ marginTop: '1rem' }}
+        onClick={logout}
+      >
+        Logout
+      </button>
     </div>
   );
 }

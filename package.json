@@ -8,9 +8,9 @@
     "server"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
-    "dev:client": "npm run dev --workspace=client",
-    "dev:server": "npm run dev --workspace=server"
+    "dev": "concurrently \"yarn workspace sarah-alex-jam-client dev\" \"yarn workspace sarah-alex-jam-server dev\"",
+    "dev:client": "yarn workspace sarah-alex-jam-client dev",
+    "dev:server": "yarn workspace sarah-alex-jam-server dev"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"

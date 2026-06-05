@@ -1,23 +1,12 @@
+import 'dotenv/config';
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import mongoose from 'mongoose';
+import { typeDefs } from './schema.js';
+import { resolvers, AuthContext } from './resolvers.js';
 
 const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/sarah-alex-jam';
 const PORT = Number(process.env.PORT ?? 4000);
-
-// Schema
-const typeDefs = `#graphql
-  type Query {
-    hello: String
-  }
-`;
-
-// Resolvers
-const resolvers = {
-  Query: {
-    hello: () => 'Hello from Sarah Alex Jam!',
-  },
-};
 
 async function main() {
   // Connect to MongoDB
@@ -33,9 +22,14 @@ async function main() {
   });
 
   // Start Apollo Server
-  const server = new ApolloServer({ typeDefs, resolvers });
+  const server = new ApolloServer<AuthContext>({ typeDefs, resolvers });
   const { url } = await startStandaloneServer(server, {
     listen: { port: PORT },
+    context: async ({ req }) => {
+      const authHeader = req.headers.authorization ?? '';
+      const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+      return { authToken: token };
+    },
   });
 
   console.log(`GraphQL server ready at ${url}`);
