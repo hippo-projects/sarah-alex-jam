@@ -1,31 +1,71 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery, gql } from '@apollo/client';
+import Login from './components/Login';
+import Register from './components/Register';
 
-const GRAPHQL_URL = 'http://localhost:4000/graphql';
-
-const query = `
-  query {
-    hello
+const ME = gql`
+  query Me {
+    me {
+      id
+      email
+    }
   }
 `;
 
 export default function App() {
-  const [message, setMessage] = useState('Loading...');
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [showRegister, setShowRegister] = useState(false);
 
-  useEffect(() => {
-    fetch(GRAPHQL_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
-    })
-      .then((res) => res.json())
-      .then((json) => setMessage(json.data?.hello ?? 'No response'))
-      .catch((err) => setMessage(`Error: ${err.message}`));
-  }, []);
+  const { data } = useQuery(ME, { skip: !token });
+  const userEmail = data?.me?.email;
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+  };
+
+  const handleSuccess = (newToken: string) => {
+    setToken(newToken);
+  };
+
+  const handleGoogleLogin = () => {
+    alert('Google login not yet integrated — wire up Google OAuth and call the googleLogin mutation with the ID token.');
+  };
+
+  if (token && userEmail) {
+    return (
+      <div>
+        <h1>Sarah Alex Jam</h1>
+        <p>Welcome, {userEmail}!</p>
+        <button onClick={handleLogout}>Logout</button>
+      </div>
+    );
+  }
+
+  if (token && !userEmail) {
+    return (
+      <div>
+        <h1>Sarah Alex Jam</h1>
+        <p>Loading...</p>
+        <button onClick={handleLogout}>Logout</button>
+      </div>
+    );
+  }
 
   return (
     <div>
       <h1>Sarah Alex Jam</h1>
-      <p>{message}</p>
+      {showRegister ? (
+        <>
+          <Register onSuccess={handleSuccess} />
+          <p>Already have an account? <button onClick={() => setShowRegister(false)}>Login</button></p>
+        </>
+      ) : (
+        <>
+          <Login onSuccess={handleSuccess} onGoogleLogin={handleGoogleLogin} />
+          <p>No account? <button onClick={() => setShowRegister(true)}>Register</button></p>
+        </>
+      )}
     </div>
   );
 }
