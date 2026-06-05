@@ -10,7 +10,7 @@ A music jam with Sarah and Alex.
 
 ### 1. Install dependencies
 ```bash
-npm install
+yarn install
 ```
 
 ### 2. Configure environment
@@ -26,7 +26,7 @@ docker compose up -d
 
 ### 4. Start the dev servers
 ```bash
-npm run dev
+yarn dev
 ```
 
 This starts both:
