@@ -93,13 +93,11 @@ Infrastructure is managed with Terraform. Two environments are available:
 - [AWS CLI](https://aws.amazon.com/cli/) configured (`aws configure`)
 - Docker (for building the server image)
 
-### 1. Configure Terraform variables
+---
 
-**Production:**
-```bash
-cd terraform
-cp terraform.tfvars.example terraform.tfvars
-```
+### First-time setup
+
+#### 1. Configure Terraform variables
 
 **Staging:**
 ```bash
@@ -107,74 +105,124 @@ cd terraform/staging
 cp terraform.tfvars.example terraform.tfvars
 ```
 
+**Production:**
+```bash
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
+```
+
 Edit `terraform.tfvars`:
 ```hcl
-docdb_password = "your-strong-password"   # min 8 chars, no @ / " or spaces
-jwt_secret     = "your-jwt-secret"
-google_client_id = "your-google-client-id"  # optional
+docdb_password   = "your-strong-password"    # min 8 chars, no @ / " or spaces
+jwt_secret       = "your-jwt-secret"
+google_client_id = "your-google-client-id"   # optional
 ```
 
-### 2. Deploy infrastructure
+#### 2. Deploy infrastructure
 ```bash
-# Production
-cd terraform
-terraform init
-terraform apply
-
 # Staging
-cd terraform/staging
-terraform init
-terraform apply
+cd terraform/staging && terraform init && terraform apply
+
+# Production
+cd terraform && terraform init && terraform apply
 ```
 
-After apply, note the outputs:
+After apply, note the outputs — you'll need them for the steps below and for GitHub secrets:
 ```
-cloudfront_url      = "https://xxxx.cloudfront.net"
-apprunner_url       = "https://xxxx.us-east-1.awsapprunner.com"
-ecr_repository_url  = "069637868194.dkr.ecr.us-east-1.amazonaws.com/sarah-alex-jam-server"
-docdb_endpoint      = "sarah-alex-jam-docdb.cluster-xxxx.us-east-1.docdb.amazonaws.com"
+cloudfront_url             = "https://xxxx.cloudfront.net"
+apprunner_url              = "https://xxxx.us-east-1.awsapprunner.com"
+ecr_repository_url         = "069637868194.dkr.ecr.us-east-1.amazonaws.com/sarah-alex-jam-staging-server"
+s3_bucket_name             = "sarah-alex-jam-staging-client-xxxx"
+cloudfront_distribution_id = "XXXXXXXXXXXX"
+docdb_endpoint             = "xxxx.us-east-1.docdb.amazonaws.com"
 ```
 
-### 3. Build and push the server image to ECR
+#### 3. Push the server image to ECR
+
+> Must be done once before Terraform can start App Runner.
+
 ```bash
+# Authenticate Docker to ECR
 aws ecr get-login-password --region us-east-1 \
   | docker login --username AWS --password-stdin \
-    $(terraform output -raw ecr_repository_url)
+    069637868194.dkr.ecr.us-east-1.amazonaws.com
 
-docker build -t sarah-alex-jam-server ./server
-docker tag sarah-alex-jam-server:latest $(terraform output -raw ecr_repository_url):latest
-docker push $(terraform output -raw ecr_repository_url):latest
+# Build for linux/amd64 (required for App Runner)
+docker build --platform linux/amd64 -t sarah-alex-jam-server ./server
+
+# Tag and push (replace with your ECR repo URL from terraform output)
+ECR_REPO=$(cd terraform/staging && terraform output -raw ecr_repository_url)
+docker tag sarah-alex-jam-server:latest $ECR_REPO:latest
+docker push $ECR_REPO:latest
 ```
 
-### 4. Deploy the client to S3
+#### 4. Deploy the client to S3
 ```bash
-cd client
-VITE_GRAPHQL_URL=$(cd ../terraform && terraform output -raw apprunner_url) \
-  yarn build
+# Build with production GraphQL URL
+VITE_GRAPHQL_URL=$(cd terraform/staging && terraform output -raw apprunner_url) \
+  yarn workspace sarah-alex-jam-client build
 
-aws s3 sync dist/ s3://$(cd ../terraform && terraform output -raw s3_bucket_name)/ --delete
+# Sync to S3
+S3_BUCKET=$(cd terraform/staging && terraform output -raw s3_bucket_name)
+aws s3 sync client/dist/ s3://$S3_BUCKET/ --delete
 
-aws cloudfront create-invalidation \
-  --distribution-id $(cd ../terraform && terraform output -raw cloudfront_distribution_id) \
-  --paths "/*"
+# Invalidate CloudFront cache
+CF_ID=$(cd terraform/staging && terraform output -raw cloudfront_distribution_id)
+aws cloudfront create-invalidation --distribution-id $CF_ID --paths "/*"
 ```
+
+---
+
+### Ongoing deployments
+
+After first-time setup, deployments are automated via GitHub Actions:
+
+| Trigger | What runs |
+|---|---|
+| PR into `main` | Auto-deploys changed parts (client / server / terraform) to staging |
+| Merge to `main` | Same as above |
+| Manual | Run individual workflows from **Actions → Run workflow** |
+
+#### Manual workflows (Actions tab in GitHub)
+
+| Workflow | What it does |
+|---|---|
+| **Deploy Client (manual)** | Build Vite + sync to S3 + invalidate CloudFront |
+| **Deploy Server (manual)** | Build Docker image + push to ECR |
+| **Terraform Apply (manual)** | `plan`, `apply`, or `destroy` for staging |
+
+#### GitHub Secrets required
+
+Add these in **Settings → Secrets → Actions**:
+
+| Secret | Description |
+|---|---|
+| `AWS_ACCESS_KEY_ID` | IAM user access key |
+| `AWS_SECRET_ACCESS_KEY` | IAM user secret key |
+| `STAGING_APPRUNNER_URL` | `terraform output apprunner_url` |
+| `STAGING_S3_BUCKET` | `terraform output s3_bucket_name` |
+| `STAGING_CLOUDFRONT_ID` | `terraform output cloudfront_distribution_id` |
+| `STAGING_CLOUDFRONT_DOMAIN` | CloudFront domain (no `https://`) |
+| `STAGING_GOOGLE_CLIENT_ID` | Google Cloud Console |
+| `STAGING_DOCDB_PASSWORD` | Value set in `terraform.tfvars` |
+| `STAGING_JWT_SECRET` | Value set in `terraform.tfvars` |
 
 ---
 
 ## Tear Down
 
-To destroy all AWS infrastructure:
 ```bash
-cd terraform
-terraform destroy
-```
-
-> ⚠️ This permanently deletes the DocumentDB cluster, all S3 files, and all other provisioned resources. There is no final snapshot by default.
-
-To also remove the ECR images before destroying:
-```bash
+# Empty ECR and S3 first (Terraform can't delete non-empty resources)
 aws ecr batch-delete-image \
-  --repository-name sarah-alex-jam-server \
-  --image-ids imageTag=latest
-terraform destroy
+  --repository-name sarah-alex-jam-staging-server \
+  --region us-east-1 \
+  --image-ids "$(aws ecr list-images --repository-name sarah-alex-jam-staging-server --region us-east-1 --query 'imageIds' --output json)"
+
+S3_BUCKET=$(cd terraform/staging && terraform output -raw s3_bucket_name)
+aws s3 rm s3://$S3_BUCKET --recursive
+
+# Destroy all infrastructure
+cd terraform/staging && terraform destroy
 ```
+
+> ⚠️ This permanently deletes all provisioned resources. There is no final snapshot.
