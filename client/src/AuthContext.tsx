@@ -1,15 +1,24 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { apolloClient } from './apollo';
 
-interface AuthUser {
+export interface HumanProfile {
+  name: string;
+  gender: string;
+  location: string;
+  radius: number;
+}
+
+export interface AuthUser {
   id: string;
   email: string;
+  human?: HumanProfile | null;
 }
 
 interface AuthContextValue {
   user: AuthUser | null;
   token: string | null;
   login: (token: string, user: AuthUser) => void;
+  updateUser: (user: AuthUser) => void;
   logout: () => void;
 }
 
@@ -29,6 +38,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(newUser);
   }, []);
 
+  const updateUser = useCallback((newUser: AuthUser) => {
+    localStorage.setItem('user', JSON.stringify(newUser));
+    setUser(newUser);
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -38,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
+    <AuthContext.Provider value={{ token, user, login, updateUser, logout }}>
       {children}
     </AuthContext.Provider>
   );
