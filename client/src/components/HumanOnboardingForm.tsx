@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useMutation } from '@apollo/client';
-import { MapPin, UserRound } from 'lucide-react';
+import { UserRound } from 'lucide-react';
 import { useAuth, type AuthUser } from '../AuthContext';
 import { ONBOARD_HUMAN_MUTATION } from '../gql';
+import LocationAutocomplete from './LocationAutocomplete';
 
 interface OnboardHumanResponse {
   onboardHuman: AuthUser;
@@ -80,17 +81,11 @@ export default function HumanOnboardingForm() {
 
           <label className="form-field">
             <span>Location</span>
-            <div className="input-with-icon">
-              <MapPin size={16} />
-              <input
-                type="text"
-                placeholder="City, state"
-                value={location}
-                onChange={e => setLocation(e.target.value)}
-                autoComplete="address-level2"
-                required
-              />
-            </div>
+            <LocationAutocomplete
+              value={location}
+              onChange={setLocation}
+              required
+            />
           </label>
 
           <label className="form-field radius-field">
