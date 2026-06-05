@@ -9,6 +9,7 @@ resource "aws_docdbelastic_cluster" "staging" {
 
   admin_user_name     = "sajadmin"
   admin_user_password = var.docdb_password
+  auth_type           = "PLAIN_TEXT"
 
   subnet_ids         = aws_subnet.private[*].id
   vpc_security_group_ids = [aws_security_group.docdb.id]
