@@ -368,6 +368,37 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* Location autocomplete */
+.location-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  list-style: none;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.location-suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.location-suggestion-item:hover,
+.location-suggestion-item--active {
+  background: var(--surface-2);
+}
+
 @media (max-width: 480px) {
   .form-grid { grid-template-columns: 1fr; }
   .login-page { padding: 0.75rem; }
