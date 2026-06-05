@@ -14,10 +14,11 @@ export const typeDefs = `#graphql
   }
 
   type DogProfile {
+    id: ID!
     name: String!
     breed: String!
     age: Float!
-    temperament: String!
+    temperament: [String!]!
     size: String!
     weight: Float!
     offLeashBehavior: String!
@@ -42,10 +43,21 @@ export const typeDefs = `#graphql
       name: String!
       breed: String!
       age: Float!
-      temperament: String!
+      temperament: [String!]!
       size: String!
       weight: Float!
       offLeashBehavior: String!
     ): User!
+    updateDogProfile(
+      dogId: ID!
+      name: String!
+      breed: String!
+      age: Float!
+      temperament: [String!]!
+      size: String!
+      weight: Float!
+      offLeashBehavior: String!
+    ): User!
+    deleteDogProfile(dogId: ID!): User!
   }
 `;
