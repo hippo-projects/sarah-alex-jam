@@ -83,20 +83,56 @@ resource "aws_route_table_association" "public" {
 }
 
 # ---------------------------------------------------------------------------
-# NAT Gateway (in first public subnet) — lets private subnets reach the internet
+# NAT Instance (cheaper alternative to NAT Gateway, ~$3.50/mo vs ~$35/mo)
 # ---------------------------------------------------------------------------
-resource "aws_eip" "nat" {
-  domain = "vpc"
+data "aws_ami" "nat" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn-ami-vpc-nat-*"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+}
+
+resource "aws_security_group" "nat" {
+  name        = "${var.app_name}-nat-sg"
+  description = "NAT instance — allow traffic from private subnets"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "All traffic from VPC private range"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [aws_vpc.main.cidr_block]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
   tags = {
-    Name        = "${var.app_name}-nat-eip"
+    Name        = "${var.app_name}-nat-sg"
     Environment = var.environment
   }
 }
 
-resource "aws_nat_gateway" "main" {
-  allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public[0].id
+resource "aws_instance" "nat" {
+  ami                         = data.aws_ami.nat.id
+  instance_type               = "t3.nano"
+  subnet_id                   = aws_subnet.public[0].id
+  vpc_security_group_ids      = [aws_security_group.nat.id]
+  source_dest_check           = false
+  associate_public_ip_address = true
 
   tags = {
     Name        = "${var.app_name}-nat"
@@ -112,15 +148,16 @@ resource "aws_nat_gateway" "main" {
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.main.id
-  }
-
   tags = {
     Name        = "${var.app_name}-private-rt"
     Environment = var.environment
   }
+}
+
+resource "aws_route" "private_nat" {
+  route_table_id         = aws_route_table.private.id
+  destination_cidr_block = "0.0.0.0/0"
+  network_interface_id   = aws_instance.nat.primary_network_interface_id
 }
 
 resource "aws_route_table_association" "private" {

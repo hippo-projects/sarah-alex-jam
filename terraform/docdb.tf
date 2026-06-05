@@ -27,7 +27,7 @@ resource "aws_docdb_cluster" "main" {
 resource "aws_docdb_cluster_instance" "main" {
   identifier         = "${var.app_name}-docdb-instance-1"
   cluster_identifier = aws_docdb_cluster.main.id
-  instance_class     = "db.t3.medium"
+  instance_class     = "db.t3.small"
 
   tags = {
     Name        = "${var.app_name}-docdb-instance-1"
