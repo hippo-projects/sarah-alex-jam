@@ -107,7 +107,7 @@ data "aws_ami" "nat" {
 
 resource "aws_security_group" "nat" {
   name        = "${var.app_name}-nat-sg"
-  description = "NAT instance — allow traffic from private subnets"
+  description = "NAT instance - allow traffic from private subnets"
   vpc_id      = aws_vpc.main.id
 
   ingress {
