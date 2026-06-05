@@ -25,5 +25,8 @@
   "bugs": {
     "url": "https://github.com/hippo-projects/sarah-alex-jam/issues"
   },
-  "homepage": "https://github.com/hippo-projects/sarah-alex-jam#readme"
+  "homepage": "https://github.com/hippo-projects/sarah-alex-jam#readme",
+  "dependencies": {
+    "yarn": "^1.22.22"
+  }
 }

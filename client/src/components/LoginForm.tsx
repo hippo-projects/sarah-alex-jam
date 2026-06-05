@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { useMutation } from '@apollo/client';
 import { GoogleLogin } from '@react-oauth/google';
 import { Music2 } from 'lucide-react';
-import { useAuth } from '../AuthContext';
+import { useAuth, type AuthUser } from '../AuthContext';
 import { LOGIN_MUTATION, REGISTER_MUTATION, GOOGLE_AUTH_MUTATION } from '../gql';
 
 interface AuthPayload {
   token: string;
-  user: { id: string; email: string };
+  user: AuthUser;
 }
 
 export default function LoginForm() {
