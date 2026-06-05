@@ -8,9 +8,9 @@
     "server"
   ],
   "scripts": {
-    "dev": "concurrently \"yarn workspace client dev\" \"yarn workspace server dev\"",
-    "dev:client": "yarn workspace client dev",
-    "dev:server": "yarn workspace server dev"
+    "dev": "concurrently \"yarn workspace sarah-alex-jam-client dev\" \"yarn workspace sarah-alex-jam-server dev\"",
+    "dev:client": "yarn workspace sarah-alex-jam-client dev",
+    "dev:server": "yarn workspace sarah-alex-jam-server dev"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
