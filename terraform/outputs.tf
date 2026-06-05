@@ -17,3 +17,13 @@ output "docdb_endpoint" {
   description = "DocumentDB cluster endpoint"
   value       = aws_docdb_cluster.main.endpoint
 }
+
+output "s3_bucket_name" {
+  description = "S3 bucket name for the React client"
+  value       = aws_s3_bucket.client.id
+}
+
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID (for cache invalidation)"
+  value       = aws_cloudfront_distribution.client.id
+}
