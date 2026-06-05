@@ -3,6 +3,7 @@ export const typeDefs = `#graphql
     id: ID!
     email: String!
     human: HumanProfile
+    dogs: [DogProfile!]!
   }
 
   type HumanProfile {
@@ -10,6 +11,16 @@ export const typeDefs = `#graphql
     gender: String!
     location: String!
     radius: Float!
+  }
+
+  type DogProfile {
+    name: String!
+    breed: String!
+    age: Float!
+    temperament: String!
+    size: String!
+    weight: Float!
+    offLeashBehavior: String!
   }
 
   type AuthPayload {
@@ -27,5 +38,14 @@ export const typeDefs = `#graphql
     login(email: String!, password: String!): AuthPayload!
     googleLogin(idToken: String!): AuthPayload!
     onboardHuman(name: String!, gender: String!, location: String!, radius: Float!): User!
+    addDogProfile(
+      name: String!
+      breed: String!
+      age: Float!
+      temperament: String!
+      size: String!
+      weight: Float!
+      offLeashBehavior: String!
+    ): User!
   }
 `;
