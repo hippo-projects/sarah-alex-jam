@@ -17,13 +17,44 @@ env:
   ECR_REPOSITORY: sarah-alex-jam-staging-server
 
 jobs:
-  deploy:
-    name: Deploy to Staging
+  # -------------------------------------------------------------------------
+  # Detect which parts of the codebase changed
+  # -------------------------------------------------------------------------
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      server: ${{ steps.filter.outputs.server }}
+      client: ${{ steps.filter.outputs.client }}
+      terraform: ${{ steps.filter.outputs.terraform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            server:
+              - 'server/**'
+              - 'package.json'
+              - 'yarn.lock'
+            client:
+              - 'client/**'
+              - 'package.json'
+              - 'yarn.lock'
+            terraform:
+              - 'terraform/staging/**'
+
+  # -------------------------------------------------------------------------
+  # Server — build + push to ECR (App Runner auto-deploys on new image)
+  # -------------------------------------------------------------------------
+  deploy-server:
+    name: Deploy server
+    needs: changes
+    if: needs.changes.outputs.server == 'true'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -32,9 +63,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # -----------------------------------------------------------------------
-      # Server — build, push to ECR, App Runner auto-deploys on new image
-      # -----------------------------------------------------------------------
       - name: Log in to ECR
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
@@ -51,9 +79,30 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      # -----------------------------------------------------------------------
-      # Client — build Vite app, sync to S3, invalidate CloudFront
-      # -----------------------------------------------------------------------
+      - name: Summary
+        run: |
+          echo "## Server deployed" >> $GITHUB_STEP_SUMMARY
+          echo "Image: \`${{ steps.ecr-login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+
+  # -------------------------------------------------------------------------
+  # Client — build Vite, sync to S3, invalidate CloudFront
+  # -------------------------------------------------------------------------
+  deploy-client:
+    name: Deploy client
+    needs: changes
+    if: needs.changes.outputs.client == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -69,9 +118,8 @@ jobs:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.STAGING_GOOGLE_CLIENT_ID }}
         run: yarn workspace sarah-alex-jam-client build
 
-      - name: Deploy client to S3
-        run: |
-          aws s3 sync client/dist/ s3://${{ secrets.STAGING_S3_BUCKET }}/ --delete
+      - name: Deploy to S3
+        run: aws s3 sync client/dist/ s3://${{ secrets.STAGING_S3_BUCKET }}/ --delete
 
       - name: Invalidate CloudFront
         run: |
@@ -79,15 +127,49 @@ jobs:
             --distribution-id ${{ secrets.STAGING_CLOUDFRONT_ID }} \
             --paths "/*"
 
-      # -----------------------------------------------------------------------
-      # Summary
-      # -----------------------------------------------------------------------
-      - name: Post deployment summary
+      - name: Summary
         run: |
-          echo "## Staging Deployment" >> $GITHUB_STEP_SUMMARY
-          echo "| | |" >> $GITHUB_STEP_SUMMARY
-          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| **Client** | https://${{ secrets.STAGING_CLOUDFRONT_DOMAIN }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Server** | ${{ secrets.STAGING_APPRUNNER_URL }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Commit** | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Triggered by** | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "## Client deployed" >> $GITHUB_STEP_SUMMARY
+          echo "URL: https://${{ secrets.STAGING_CLOUDFRONT_DOMAIN }}" >> $GITHUB_STEP_SUMMARY
+
+  # -------------------------------------------------------------------------
+  # Terraform — apply staging infrastructure changes
+  # -------------------------------------------------------------------------
+  deploy-terraform:
+    name: Terraform apply (staging)
+    needs: changes
+    if: needs.changes.outputs.terraform == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: terraform/staging
+        run: terraform init
+
+      - name: Terraform apply
+        working-directory: terraform/staging
+        env:
+          TF_VAR_docdb_password: ${{ secrets.STAGING_DOCDB_PASSWORD }}
+          TF_VAR_jwt_secret: ${{ secrets.STAGING_JWT_SECRET }}
+          TF_VAR_google_client_id: ${{ secrets.STAGING_GOOGLE_CLIENT_ID }}
+        run: terraform apply -auto-approve
+
+      - name: Summary
+        working-directory: terraform/staging
+        run: |
+          echo "## Terraform applied (staging)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          terraform output >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
