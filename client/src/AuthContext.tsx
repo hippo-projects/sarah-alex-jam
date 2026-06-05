@@ -8,10 +8,21 @@ export interface HumanProfile {
   radius: number;
 }
 
+export interface DogProfile {
+  name: string;
+  breed: string;
+  age: number;
+  temperament: string;
+  size: string;
+  weight: number;
+  offLeashBehavior: string;
+}
+
 export interface AuthUser {
   id: string;
   email: string;
   human?: HumanProfile | null;
+  dogs: DogProfile[];
 }
 
 interface AuthContextValue {

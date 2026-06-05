@@ -13,11 +13,21 @@ function serializeUser(user: {
   _id: { toString(): string };
   email: string;
   human?: { name: string; gender: string; location: string; radius: number };
+  dogs?: Array<{
+    name: string;
+    breed: string;
+    age: number;
+    temperament: string;
+    size: string;
+    weight: number;
+    offLeashBehavior: string;
+  }>;
 }) {
   return {
     id: user._id.toString(),
     email: user.email,
     human: user.human?.name ? user.human : null,
+    dogs: user.dogs ?? [],
   };
 }
 
@@ -110,6 +120,59 @@ export const resolvers = {
         location: trimmedLocation,
         radius,
       };
+      await user.save();
+
+      return serializeUser(user);
+    },
+
+    addDogProfile: async (
+      _: unknown,
+      {
+        name,
+        breed,
+        age,
+        temperament,
+        size,
+        weight,
+        offLeashBehavior,
+      }: {
+        name: string;
+        breed: string;
+        age: number;
+        temperament: string;
+        size: string;
+        weight: number;
+        offLeashBehavior: string;
+      },
+      context: AuthContext,
+    ) => {
+      const trimmedName = name.trim();
+      const trimmedBreed = breed.trim();
+      const trimmedTemperament = temperament.trim();
+      const trimmedSize = size.trim();
+      const trimmedOffLeashBehavior = offLeashBehavior.trim();
+
+      if (!trimmedName) throw new Error('Dog name is required');
+      if (!trimmedBreed) throw new Error('Breed is required');
+      if (!Number.isFinite(age) || age < 0) throw new Error('Age must be zero or greater');
+      if (!trimmedTemperament) throw new Error('Temperament is required');
+      if (!trimmedSize) throw new Error('Size is required');
+      if (!Number.isFinite(weight) || weight <= 0) throw new Error('Weight must be greater than zero');
+      if (!trimmedOffLeashBehavior) throw new Error('Off leash behavior is required');
+
+      const user = await requireUser(context.authToken);
+      user.dogs = [
+        ...(user.dogs ?? []),
+        {
+          name: trimmedName,
+          breed: trimmedBreed,
+          age,
+          temperament: trimmedTemperament,
+          size: trimmedSize,
+          weight,
+          offLeashBehavior: trimmedOffLeashBehavior,
+        },
+      ];
       await user.save();
 
       return serializeUser(user);

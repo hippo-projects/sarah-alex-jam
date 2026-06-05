@@ -10,6 +10,15 @@ export interface IUser extends Document {
     location: string;
     radius: number;
   };
+  dogs?: Array<{
+    name: string;
+    breed: string;
+    age: number;
+    temperament: string;
+    size: string;
+    weight: number;
+    offLeashBehavior: string;
+  }>;
   createdAt: Date;
 }
 
@@ -23,6 +32,15 @@ const UserSchema = new Schema<IUser>({
     location: { type: String },
     radius: { type: Number },
   },
+  dogs: [{
+    name: { type: String, required: true },
+    breed: { type: String, required: true },
+    age: { type: Number, required: true },
+    temperament: { type: String, required: true },
+    size: { type: String, required: true },
+    weight: { type: Number, required: true },
+    offLeashBehavior: { type: String, required: true },
+  }],
   createdAt: { type: Date, default: Date.now },
 });
 
