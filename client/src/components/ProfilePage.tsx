@@ -1,4 +1,4 @@
-import { LogOut, MapPin, Music2, UserRound } from 'lucide-react';
+import { LogOut, MapPin, Music2 } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 
 export default function ProfilePage() {
@@ -48,13 +48,6 @@ export default function ProfilePage() {
           <div className="profile-detail">
             <span>Radius</span>
             <strong>{human.radius} mi</strong>
-          </div>
-          <div className="profile-detail">
-            <span>Status</span>
-            <strong>
-              <UserRound size={15} />
-              Onboarded
-            </strong>
           </div>
         </div>
       </section>
