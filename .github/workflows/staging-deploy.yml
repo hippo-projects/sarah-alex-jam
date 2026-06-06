@@ -164,6 +164,8 @@ jobs:
           TF_VAR_docdb_password: ${{ secrets.STAGING_DOCDB_PASSWORD }}
           TF_VAR_jwt_secret: ${{ secrets.STAGING_JWT_SECRET }}
           TF_VAR_google_client_id: ${{ secrets.STAGING_GOOGLE_CLIENT_ID }}
+          TF_VAR_domain_name: ${{ secrets.STAGING_DOMAIN_NAME }}
+          TF_VAR_route53_zone_id: ${{ secrets.STAGING_ROUTE53_ZONE_ID }}
         run: terraform apply -auto-approve
 
       - name: Summary

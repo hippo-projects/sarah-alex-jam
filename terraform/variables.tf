@@ -39,3 +39,8 @@ variable "google_client_id" {
   type        = string
   default     = ""
 }
+
+variable "domain_name" {
+  description = "Root domain name (e.g. example.com). Client served at apex, API at api.<domain>."
+  type        = string
+}
