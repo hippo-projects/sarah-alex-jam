@@ -100,3 +100,29 @@ export const DELETE_DOG_PROFILE_MUTATION = gql`
     deleteDogProfile(dogId: $dogId) { ...UserFields }
   }
 `;
+
+export const DOG_MATCHES_QUERY = gql`
+  query DogMatches($dogId: ID!) {
+    dogMatches(dogId: $dogId) {
+      score
+      reasons
+      dog { id name breed age temperament size weight offLeashBehavior }
+      owner {
+        id
+        human { name gender location radius }
+      }
+    }
+  }
+`;
+
+export const DOG_SEARCH_QUERY = gql`
+  query DogSearch($filters: DogSearchFilters) {
+    dogSearch(filters: $filters) {
+      dog { id name breed age temperament size weight offLeashBehavior }
+      owner {
+        id
+        human { name gender location radius }
+      }
+    }
+  }
+`;

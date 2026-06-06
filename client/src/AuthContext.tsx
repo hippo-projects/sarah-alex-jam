@@ -26,6 +26,24 @@ export interface AuthUser {
   dogs: DogProfile[];
 }
 
+export interface DogMatch {
+  score: number;
+  reasons: string[];
+  dog: DogProfile;
+  owner: {
+    id: string;
+    human: HumanProfile | null;
+  };
+}
+
+export interface DogSearchResult {
+  dog: DogProfile;
+  owner: {
+    id: string;
+    human: HumanProfile | null;
+  };
+}
+
 interface AuthContextValue {
   user: AuthUser | null;
   token: string | null;
