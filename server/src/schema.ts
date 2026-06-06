@@ -24,6 +24,34 @@ export const typeDefs = `#graphql
     offLeashBehavior: String!
   }
 
+  type DogMatchOwner {
+    id: ID!
+    human: HumanProfile
+  }
+
+  type DogMatch {
+    score: Float!
+    reasons: [String!]!
+    dog: DogProfile!
+    owner: DogMatchOwner!
+  }
+
+  type DogSearchResult {
+    dog: DogProfile!
+    owner: DogMatchOwner!
+  }
+
+  input DogSearchFilters {
+    breed: String
+    temperament: [String!]
+    size: String
+    offLeashBehavior: String
+    minAge: Float
+    maxAge: Float
+    minWeight: Float
+    maxWeight: Float
+  }
+
   type AuthPayload {
     token: String!
     user: User!
@@ -32,6 +60,8 @@ export const typeDefs = `#graphql
   type Query {
     me: User
     hello: String
+    dogMatches(dogId: ID!): [DogMatch!]!
+    dogSearch(filters: DogSearchFilters): [DogSearchResult!]!
   }
 
   type Mutation {

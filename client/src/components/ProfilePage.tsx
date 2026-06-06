@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useMutation } from '@apollo/client';
-import { ArrowLeft, LogOut, MapPin, Music2, Pencil, Plus, Save, Trash2 } from 'lucide-react';
-import { useAuth, type AuthUser, type DogProfile } from '../AuthContext';
+import { useMutation, useQuery } from '@apollo/client';
+import { ArrowLeft, MapPin, Pencil, Plus, Save, Trash2 } from 'lucide-react';
+import { useAuth, type AuthUser, type DogMatch, type DogProfile } from '../AuthContext';
 import {
   ADD_DOG_PROFILE_MUTATION,
   DELETE_DOG_PROFILE_MUTATION,
+  DOG_MATCHES_QUERY,
   UPDATE_DOG_PROFILE_MUTATION,
 } from '../gql';
 
@@ -18,6 +19,10 @@ interface UpdateDogProfileResponse {
 
 interface DeleteDogProfileResponse {
   deleteDogProfile: AuthUser;
+}
+
+interface DogMatchesResponse {
+  dogMatches: DogMatch[];
 }
 
 const sizeOptions = ['Small', 'Medium', 'Large', 'Extra large'];
@@ -166,7 +171,7 @@ function TemperamentTokenField({
 }
 
 export default function ProfilePage() {
-  const { user, logout, updateUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const human = user?.human;
   const dogs = user?.dogs ?? [];
   const [selectedDogId, setSelectedDogId] = useState<string | null>(null);
@@ -194,6 +199,14 @@ export default function ProfilePage() {
   const [updateDogProfile, { loading: updatingDog }] = useMutation<UpdateDogProfileResponse>(UPDATE_DOG_PROFILE_MUTATION);
   const [deleteDogProfile, { loading: deletingDog }] = useMutation<DeleteDogProfileResponse>(DELETE_DOG_PROFILE_MUTATION);
   const selectedDog = dogs.find(dog => dog.id === selectedDogId) ?? null;
+  const {
+    data: dogMatchesData,
+    error: dogMatchesError,
+    loading: loadingDogMatches,
+  } = useQuery<DogMatchesResponse>(DOG_MATCHES_QUERY, {
+    skip: !selectedDog,
+    variables: { dogId: selectedDog?.id ?? '' },
+  });
 
   if (!user || !human) return null;
 
@@ -303,10 +316,6 @@ export default function ProfilePage() {
           <button className="btn btn--ghost" type="button" onClick={() => setIsOnboardingDog(false)}>
             <ArrowLeft size={15} />
             Back
-          </button>
-          <button className="btn btn--ghost" type="button" onClick={logout}>
-            <LogOut size={15} />
-            Logout
           </button>
         </header>
 
@@ -421,10 +430,6 @@ export default function ProfilePage() {
           <button className="btn btn--ghost" type="button" onClick={() => setSelectedDogId(null)}>
             <ArrowLeft size={15} />
             Back
-          </button>
-          <button className="btn btn--ghost" type="button" onClick={logout}>
-            <LogOut size={15} />
-            Logout
           </button>
         </header>
 
@@ -562,6 +567,58 @@ export default function ProfilePage() {
                   <strong>{selectedDog.offLeashBehavior}</strong>
                 </div>
               </div>
+
+              <section className="matches-section">
+                <div className="dog-section-header">
+                  <div>
+                    <p className="profile-kicker">Matches</p>
+                    <h2>Similar dogs</h2>
+                  </div>
+                </div>
+
+                {loadingDogMatches && <p className="dog-empty">Finding matches...</p>}
+                {dogMatchesError && <p className="form-error">Could not load matches.</p>}
+                {!loadingDogMatches && !dogMatchesError && (dogMatchesData?.dogMatches.length ?? 0) === 0 && (
+                  <p className="dog-empty">No matches yet.</p>
+                )}
+                {!loadingDogMatches && !dogMatchesError && (dogMatchesData?.dogMatches.length ?? 0) > 0 && (
+                  <div className="match-list">
+                    {dogMatchesData?.dogMatches.map(match => (
+                      <article className="match-card" key={`${match.owner.id}-${match.dog.id}`}>
+                        <div className="match-card-header">
+                          <div>
+                            <h3>{match.dog.name}</h3>
+                            <p>
+                              {match.dog.breed}
+                              {match.owner.human?.name ? ` with ${match.owner.human.name}` : ''}
+                            </p>
+                          </div>
+                          <strong>{match.score}%</strong>
+                        </div>
+                        <dl>
+                          <div>
+                            <dt>Temperament</dt>
+                            <dd>{formatTemperament(match.dog.temperament)}</dd>
+                          </div>
+                          <div>
+                            <dt>Size</dt>
+                            <dd>{match.dog.size}</dd>
+                          </div>
+                          <div>
+                            <dt>Location</dt>
+                            <dd>{match.owner.human?.location ?? 'Unknown'}</dd>
+                          </div>
+                        </dl>
+                        <div className="match-reasons">
+                          {match.reasons.map(reason => (
+                            <span key={reason}>{reason}</span>
+                          ))}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
             </>
           )}
         </section>
@@ -571,17 +628,6 @@ export default function ProfilePage() {
 
   return (
     <main className="profile-page">
-      <header className="profile-header">
-        <div className="header-title">
-          <Music2 size={22} />
-          <h1>Sarah Alex Jam</h1>
-        </div>
-        <button className="btn btn--ghost" type="button" onClick={logout}>
-          <LogOut size={15} />
-          Logout
-        </button>
-      </header>
-
       <section className="profile-panel">
         <div className="profile-avatar" aria-hidden="true">
           {human.name.slice(0, 1).toUpperCase()}
