@@ -170,6 +170,7 @@ export default function ProfilePage() {
   const human = user?.human;
   const dogs = user?.dogs ?? [];
   const [selectedDogId, setSelectedDogId] = useState<string | null>(null);
+  const [isOnboardingDog, setIsOnboardingDog] = useState(false);
   const [name, setName] = useState('');
   const [breed, setBreed] = useState(breedOptions[0]);
   const [age, setAge] = useState('');
@@ -243,6 +244,7 @@ export default function ProfilePage() {
         setSize(sizeOptions[1]);
         setWeight('');
         setOffLeashBehavior(offLeashOptions[2]);
+        setIsOnboardingDog(false);
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Could not save dog profile');
@@ -293,6 +295,124 @@ export default function ProfilePage() {
       setDogError(err instanceof Error ? err.message : 'Could not delete dog profile');
     }
   };
+
+  if (isOnboardingDog) {
+    return (
+      <main className="profile-page">
+        <header className="profile-header">
+          <button className="btn btn--ghost" type="button" onClick={() => setIsOnboardingDog(false)}>
+            <ArrowLeft size={15} />
+            Back
+          </button>
+          <button className="btn btn--ghost" type="button" onClick={logout}>
+            <LogOut size={15} />
+            Logout
+          </button>
+        </header>
+
+        <section className="dog-detail-panel">
+          <div className="dog-detail-header">
+            <div>
+              <p className="profile-kicker">Dog onboarding</p>
+              <h1>Onboard a dog</h1>
+              <p>Add the profile details for one of {human.name}'s dogs.</p>
+            </div>
+          </div>
+
+          <form className="dog-form dog-edit-form" onSubmit={handleSubmit}>
+            <div className="form-grid">
+              <label className="form-field">
+                <span>Name</span>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </label>
+              <label className="form-field">
+                <span>Breed</span>
+                <select value={breed} onChange={e => setBreed(e.target.value)} required>
+                  {breedOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="form-grid dog-form-grid">
+              <label className="form-field">
+                <span>Age</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={age}
+                  onChange={e => setAge(e.target.value)}
+                  required
+                />
+              </label>
+              <label className="form-field">
+                <span>Size</span>
+                <select value={size} onChange={e => setSize(e.target.value)} required>
+                  {sizeOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="form-field">
+                <span>Weight</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="0.1"
+                  value={weight}
+                  onChange={e => setWeight(e.target.value)}
+                  required
+                />
+              </label>
+            </div>
+
+            <div className="form-grid">
+              <TemperamentTokenField
+                inputValue={temperamentInput}
+                label="Temperament"
+                listId="temperament-options"
+                onInputChange={setTemperamentInput}
+                onTokensChange={setTemperament}
+                tokens={temperament}
+              />
+              <label className="form-field">
+                <span>Off leash behavior</span>
+                <select
+                  value={offLeashBehavior}
+                  onChange={e => setOffLeashBehavior(e.target.value)}
+                  required
+                >
+                  {offLeashOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {error && <p className="form-error">{error}</p>}
+
+            <div className="dog-form-actions">
+              <button className="btn btn--primary" type="submit" disabled={loading}>
+                <Plus size={15} />
+                {loading ? 'Saving...' : 'Add dog'}
+              </button>
+              <button className="btn btn--ghost" type="button" onClick={() => setIsOnboardingDog(false)}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+      </main>
+    );
+  }
 
   if (selectedDog) {
     return (
@@ -497,95 +617,21 @@ export default function ProfilePage() {
       <section className="dog-panel">
         <div className="dog-section-header">
           <div>
-            <p className="profile-kicker">Dog profiles</p>
-            <h2>Onboard a dog</h2>
+            <p className="profile-kicker">My dogs</p>
+            <h2>{human.name}'s dogs</h2>
           </div>
-        </div>
-
-        <form className="dog-form" onSubmit={handleSubmit}>
-          <div className="form-grid">
-            <label className="form-field">
-              <span>Name</span>
-              <input
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                required
-              />
-            </label>
-            <label className="form-field">
-              <span>Breed</span>
-              <select value={breed} onChange={e => setBreed(e.target.value)} required>
-                {breedOptions.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="form-grid dog-form-grid">
-            <label className="form-field">
-              <span>Age</span>
-              <input
-                type="number"
-                min="0"
-                step="0.5"
-                value={age}
-                onChange={e => setAge(e.target.value)}
-                required
-              />
-            </label>
-            <label className="form-field">
-              <span>Size</span>
-              <select value={size} onChange={e => setSize(e.target.value)} required>
-                {sizeOptions.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </label>
-            <label className="form-field">
-              <span>Weight</span>
-              <input
-                type="number"
-                min="1"
-                step="0.1"
-                value={weight}
-                onChange={e => setWeight(e.target.value)}
-                required
-              />
-            </label>
-          </div>
-
-          <div className="form-grid">
-            <TemperamentTokenField
-              inputValue={temperamentInput}
-              label="Temperament"
-              listId="temperament-options"
-              onInputChange={setTemperamentInput}
-              onTokensChange={setTemperament}
-              tokens={temperament}
-            />
-            <label className="form-field">
-              <span>Off leash behavior</span>
-              <select
-                value={offLeashBehavior}
-                onChange={e => setOffLeashBehavior(e.target.value)}
-                required
-              >
-                {offLeashOptions.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          {error && <p className="form-error">{error}</p>}
-
-          <button className="btn btn--primary" type="submit" disabled={loading}>
+          <button
+            className="btn btn--primary"
+            type="button"
+            onClick={() => {
+              setSelectedDogId(null);
+              setIsOnboardingDog(true);
+            }}
+          >
             <Plus size={15} />
-            {loading ? 'Saving...' : 'Add dog'}
+            Add dog
           </button>
-        </form>
+        </div>
 
         <div className="dog-list">
           {dogs.length === 0 ? (
