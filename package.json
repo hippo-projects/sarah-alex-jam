@@ -12,6 +12,8 @@
     "dev:client": "yarn workspace sarah-alex-jam-client dev",
     "dev:server": "yarn workspace sarah-alex-jam-server dev",
     "seed": "npm run seed --workspace server"
+    "cache:clear": "yarn cache clean && rm -rf client/node_modules server/node_modules node_modules && yarn install",
+    "cache:clear:vite": "rm -rf client/node_modules/.vite"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"

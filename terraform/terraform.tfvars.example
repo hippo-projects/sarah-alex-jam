@@ -1,0 +1,13 @@
+# Copy this file to terraform.tfvars and fill in the values.
+# terraform.tfvars is git-ignored — do not commit it.
+
+# Required — no defaults
+docdb_password = "replace-with-strong-password"
+jwt_secret     = "replace-with-long-random-secret"
+
+# Optional — override defaults if needed
+# aws_region       = "us-east-1"
+# app_name         = "sarah-alex-jam"
+# environment      = "production"
+# docdb_username   = "sajadmin"
+# google_client_id = "xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com"
