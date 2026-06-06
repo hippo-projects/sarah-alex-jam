@@ -10,7 +10,8 @@
   "scripts": {
     "dev": "concurrently \"yarn workspace sarah-alex-jam-client dev\" \"yarn workspace sarah-alex-jam-server dev\"",
     "dev:client": "yarn workspace sarah-alex-jam-client dev",
-    "dev:server": "yarn workspace sarah-alex-jam-server dev"
+    "dev:server": "yarn workspace sarah-alex-jam-server dev",
+    "seed": "npm run seed --workspace server"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"

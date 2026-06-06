@@ -4,6 +4,7 @@ export interface IUser extends Document {
   email: string;
   passwordHash?: string;
   googleId?: string;
+  isSeedUser?: boolean;
   human?: {
     name: string;
     gender: string;
@@ -27,6 +28,7 @@ const UserSchema = new Schema<IUser>({
   email: { type: String, required: true, unique: true },
   passwordHash: { type: String },
   googleId: { type: String },
+  isSeedUser: { type: Boolean, default: false },
   human: {
     name: { type: String },
     gender: { type: String },
